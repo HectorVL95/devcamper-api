@@ -2,6 +2,7 @@ import bootcamp_model from '../models/bootcamps.js'
 import { async_handler } from '../middlewares/async-handler.js'
 import { error_response } from '../utils/error-response.js'
 import { geocoder } from '../utils/geocode.js'
+import path from 'path'
 
 export const get_all_bootcamps = async_handler(async (req, res, next) => {
   let query
@@ -99,7 +100,8 @@ export const get_bootcamp = async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    message: `Found bootcamp ${bootcamp.name}`
+    message: `Found bootcamp ${bootcamp.name}`,
+    data: bootcamp
   })
 }
 
@@ -159,7 +161,7 @@ export const get_bootcamps_in_radius = async_handler( async (req, res, next) => 
 
   if (!bootcamps) {
     return next (
-      new error_response('Bootcamps not found', 200)
+      new error_response('Bootcamps not found', 400)
     )
   }
 
@@ -169,4 +171,57 @@ export const get_bootcamps_in_radius = async_handler( async (req, res, next) => 
     data: bootcamps
   })
 
+})
+
+export const bootcamp_photo_upload = async_handler(async (req, rest ,next) => {
+  const { id } = req.params
+
+  const bootcamp = await bootcamp_model.findById(id)
+
+  if (!bootcamp) {
+    return next(
+      new error_response('Bootcamp not found', 400)
+    )
+  }
+
+  if (!req.files) {
+    return next(
+      new error_response('Please upload a file', 400)
+    )
+  }
+
+  const file = req.files.file
+
+  //Make sure the image is a photo
+  if (!file.mymetype.startsWith('image')) {
+    return next(
+      new error_response('Please upload an image file', 400)
+    )
+  }
+
+  if (file.size > process.env.MAX_FILE_UPLOAD ) {
+    return next(
+      new error_response(`Please upload an image less than ${process.env.MAX_FILE_UPLOAD}`, 400 )
+    )
+  }
+
+  file.name = `photo_${bootcamp._id}${path.parse(file.name).ext}`
+
+  file.mv(`${process.env.FILE_UPLOAD_PATH}/${file.name}`, async err => {
+    if (err) {
+      console.error(err)
+      return next (
+        new error_response(
+          `Problem with file upload`, 500
+        )
+      )
+    }
+    await bootcamp_model.findByIdAndUpdate(id, { photo: file.name })
+  })
+
+  res.status(200).json({
+    success: true,
+    data: file.name
+  })
+  console.log(file.name)
 })

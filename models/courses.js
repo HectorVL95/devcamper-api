@@ -36,36 +36,64 @@ const course_model = new Schema({
     ref: 'Bootcamp',
     required: true
   }
-})
+});
 
-//Static method to get average of course tuitions
-course_model.statics.get_average_cost = async function(bootcamp_id) {
-  console.log('Calculating average cost...'.blue)
+// 🧮 Static method to calculate average tuition for a bootcamp
+course_model.statics.get_average_cost = async function (bootcamp_id) {
+  console.log('Calculating average cost...'.blue);
 
+  // Perform aggregation to get the total average tuition
   const obj = await this.aggregate([
-    {
-      $match: {
-        bootcamp: bootcamp_id
-      },
-      $group: {
-        _id: '$bootcamp',
-        average_cost: { $avg: '$tuition' } 
-      }
+    { $match: { bootcamp: bootcamp_id } },
+    { $group: { _id: '$bootcamp', average_cost: { $avg: '$tuition' } } }
+  ]);
+
+  console.log('Aggregation result:', obj);
+
+  try {
+    if (obj.length > 0) {
+      // Round the average to the nearest 10
+      await this.model('Bootcamp').findByIdAndUpdate(bootcamp_id, {
+        average_cost: Math.ceil(obj[0].average_cost / 10) * 10
+      });
+      console.log('Bootcamp updated with new average_cost:', obj[0].average_cost);
+    } else {
+      console.log('No courses found for bootcamp:', bootcamp_id);
     }
-  ])
-
-  console.log(obj);
-}
-
-//Get average cost after save
-course_model.post('createOne', function () {
-  this.constructor.get_average_cost(this.bootcamps)
-})
-
-//Get average cost before remove
-course_model.pre('deleteOne', function () {
-  this.constructor.get_average_cost(this.bootcamps)
-})
+  } catch (err) {
+    console.error('Error updating average cost:', err);
+  }
+};
 
 
-export default model('Course', course_model)
+// 🟢 Post middleware for createOne (after creation)
+course_model.post('createOne', async function (doc, next) {
+  console.log(`Course created: ${doc.title}`);
+  try {
+    if (doc.bootcamp) {
+      await this.model.get_average_cost(doc.bootcamp);
+    }
+  } catch (err) {
+    console.error('Error updating average cost after create:', err);
+  }
+  next();
+});
+
+// 🔴 Pre middleware for deleteOne (before deletion)
+course_model.pre('deleteOne', { document: false, query: true }, async function (next) {
+  const bootcamp_id = this.getFilter().bootcamp;
+  console.log(`Attempting to update average cost for bootcamp ${bootcamp_id} before course deletion`);
+
+  try {
+    const doc = await this.model.findOne(this.getFilter());
+    if (doc && doc.bootcamp) {
+      await this.model.get_average_cost(doc.bootcamp);
+    }
+  } catch (err) {
+    console.error('Error updating average cost before delete:', err);
+  }
+
+  next();
+});
+
+export default model('Course', course_model);

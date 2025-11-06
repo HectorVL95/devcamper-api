@@ -56,12 +56,12 @@ export const create_course =  async (req, res, next) => {
 
   const course = await course_model.create({...req.body, bootcamp: id})
 
+  console.log(`course ${course.title} created with the amount of ${course.tuition}`)
   res.status(200).json({
     success: true,
     message: `Created course ${course.title} for bootcamp ${bootcamp.name}`
   })
 }
-
 
 export const delete_course = async (req, res, next) => {
   const { id } = req.params
