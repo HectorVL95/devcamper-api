@@ -30,10 +30,7 @@ const bootcamp_model = new Schema({
     type: String,
     match: [ /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please add a valid email' ]
   },
-  address: {
-    type: String,
-    required: [true, 'Please an address']
-  },
+  address: String,
   location: {
     type: {
       type: String,
@@ -125,7 +122,7 @@ bootcamp_model.pre('save', async function(next) {
     country: loc[0].countryCode
   }
 
-  this.address = undefined;
+  // this.address = undefined;
   next()
 })
 
