@@ -15,7 +15,7 @@ export const get_courses = async (req, res, next) => {
 
   if (!courses) {
     return next( 
-      error_response('Courses not found', 404)
+      new error_response('Courses not found', 404)
     )
   }
 
@@ -33,7 +33,7 @@ export const get_course = async (req, res, next) => {
 
   if (!course) {
     return next(
-      error_response('No course found', 404)
+      new error_response('No course found', 404)
     )
   }
 
@@ -50,7 +50,13 @@ export const create_course =  async (req, res, next) => {
 
   if (!bootcamp) {
     return next(
-      error_response('Bootcam non existen', 404)
+      new error_response('Bootcam non existent', 404)
+    )
+  }
+
+  if (bootcamp.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    return next(
+      new error_response(`User ${req.user.id} is not authorized to add course to bootcamp ${bootcamp._id}`, 401)
     )
   }
 
@@ -70,7 +76,7 @@ export const delete_course = async (req, res, next) => {
 
   if (!course) {
     return next(
-      error_response('No course found', 404)
+      new error_response('No course found', 404)
     )
   }
 
@@ -78,7 +84,13 @@ export const delete_course = async (req, res, next) => {
 
   if (!bootcamp) {
     return next (
-      error_response('No bootcamp exist', 404)
+      new error_response('No bootcamp exist', 404)
+    )
+  }
+
+  if (course.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    return next(
+      new error_response(`User ${req.user.id} is not authorized to delete course to bootcamp ${course._id}`, 401)
     )
   }
 
@@ -97,7 +109,13 @@ export const update_course = async (req, res, next) => {
 
   if (!course) {
     return next(
-      error_response('Course not found', 404)
+      new error_response('Course not found', 404)
+    )
+  }
+
+  if (course.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    return next(
+      new error_response(`User ${req.user.id} is not authorized to add course to bootcamp ${coursse._id}`, 401)
     )
   }
 

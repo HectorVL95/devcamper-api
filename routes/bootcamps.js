@@ -12,7 +12,7 @@ bootcamp_routes.post('/create_bootcamp', protect_route, authorize('admin', 'publ
 
 bootcamp_routes.get('/get_bootcamp/:id', get_bootcamp)
 
-bootcamp_routes.put('/:id', protect_route, authorize('publisher'), update_bootcamp)
+bootcamp_routes.put('/update_bootcamp/:id', protect_route, authorize('publisher'), update_bootcamp)
 
 bootcamp_routes.delete('/delete_bootcamp/:id', protect_route, authorize('admin', 'publisher'), delete_bootcamp)
 

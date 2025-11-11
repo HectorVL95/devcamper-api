@@ -5,6 +5,8 @@ import dotenv from 'dotenv'
 dotenv.config()
 import bootcamp_model from './models/bootcamps.js'
 import course_model from './models/courses.js'
+import user_model from './models/users.js'
+import review_model from './models/reviews.js'
 
 const connect = async () => {
   try {
@@ -23,10 +25,21 @@ const courses = JSON.parse(
   fs.readFileSync(`./data/courses.json`, `utf-8`)
 )
 
+const users = JSON.parse(
+  fs.readFileSync(`./data/users.json`, 'utf-8')
+)
+
+const reviews = JSON.parse(
+  fs.readFileSync(`./data/reviews.json`, 'utf-8')
+)
+
+
 const import_data = async () => {
   try {
     await bootcamp_model.create(bootcamps)
-    // await course_model.create(courses)
+    await course_model.create(courses)
+    await user_model.create(users)
+    await review_model.create(reviews)
     console.log('Data imported...'.green.inverse)
     process.exit()
   } catch (error) {
@@ -38,6 +51,8 @@ const delete_data = async () => {
   try {
     await bootcamp_model.deleteMany()
     await course_model.deleteMany()
+    await user_model.deleteMany()
+    await review_model.deleteMany()
     console.log('Data deleted...'.red.inverse)
     process.exit()
   } catch (error) {

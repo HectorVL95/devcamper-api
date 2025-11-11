@@ -42,6 +42,15 @@ export const get_bootcamp = async (req, res, next) => {
 }
 
 export const create_bootcamp = async (req, res, next) => {
+
+  req.body.user = req.user.id
+
+  const published_bootcamp = await bootcamp_model.findOne({user: req.user.id})
+
+  if (published_bootcamp && req.user.role !== 'admin') {
+    return next(new error_response(`The user with id ${req.user.id} has already published a bootcamp`, 401))
+  }
+
   const new_bootcamp =  await bootcamp_model.create(req.body)
 
   if (!new_bootcamp) {
@@ -59,22 +68,45 @@ export const create_bootcamp = async (req, res, next) => {
   })
 }
 
-export const update_bootcamp = (req, res) => {
+export const update_bootcamp = async (req, res, next) => {
+  const { id } = req.params
+  const update_bootcamp = await bootcamp_model.findById(id);
+
+  if (!bootcamp_model) {
+    return next(
+      new error_response(`Bootcamp not found with id of ${id}`, 404)
+    )
+  }
+
+  if (update_bootcamp.user.toString() !== req.user.id &&  req.user.role !== 'admin') {
+    return next( 
+      new error_response(`User ${req.user.id} is not authorized to update this bootcamp`, 404)
+     )
+  }
+
+   await update_bootcamp.updateOne(req.body)
+
   res.status(200).json({ success: true, message: `update bootcamp ${req.params.id}` })
 }
 
 export const delete_bootcamp = async (req, res, next) => {
   const { id } = req.params
 
-  const deleted_bootcamp = await bootcamp_model.findById(id);
+  const bootcamp_to_delete = await bootcamp_model.findById(id);
 
-  if (!deleted_bootcamp) {
+  if (!bootcamp_to_delete) {
     return next(
       new error_response('Bootcamp not deleted', 400)
     )
   }
 
-  await deleted_bootcamp.deleteOne();
+  if (bootcamp_to_delete.user !== req.user.id && req.user.role !== 'admin') {
+    return next (
+      new error_response(`User `, 401)
+    )
+  }
+
+  await bootcamp_to_delete.deleteOne();
 
   res.status(200).json({
     success: true,

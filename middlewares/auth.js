@@ -26,7 +26,7 @@ export const protect_route = async_handler(async (req, res, next) => {
     
     next()
   } catch (error) {
-    
+    console.log('protected rpite error', error.message)
   }
 })
 
